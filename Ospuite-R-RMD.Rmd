@@ -1,0 +1,186 @@
+---
+title: "使用R调控Pk-sim代码Demo"
+date: "`r Sys.Date()`"
+output:
+  rmdformats::robobook:
+    highlight: kate
+---
+
+```{r setup, include=FALSE}
+## Global options
+library(ospsuite)
+simFilePath <- c("D:/works/PC/PK-sim/test/Adams1984_IV_0.25mg.pkml") 
+sim <- loadSimulation(simFilePath)
+knitr::opts_chunk$set(cache = TRUE)
+```
+
+# 开始你的模型模拟
+
+本文章代码参考[OSPSuite-R官方文档](https://github.com/Open-Systems-Pharmacology/OSPSuite-R)
+
+## 1. 模型导入
+
+```{r  , eval=FALSE}
+# pkml文件的path位置，注意R的path斜杠方向
+simFilePath <- c("D:/works/PK-sim/test/Adams1984_IV_0.25mg.pkml") 
+# loadSimulation载入模拟
+sim <- loadSimulation(simFilePath)
+
+```
+
+## 2. 获取模型参数（entity）
+
+### 获取单个的模型参数
+
+模型参数主要分为三类：
+
+-   molecules
+
+getMolecule
+
+```{r ,prompt=TRUE,comment=""}
+# 模型种的path主要通过|来进行层级表示, 同时也需要在引号""中
+# 例如Get the molecule Alprazolam located in kidney intracellular space
+molecule_in_kidney <- getMolecule("Organism|Kidney|Intracellular|Alprazolam", sim)
+print(molecule_in_kidney)
+```
+
+------------------------------------------------------------------------
+
+-   containers
+
+getContainer
+
+```{r ,prompt=TRUE,comment=""}
+# Get the container "Liver"
+liver_Container <- getContainer("Organism|Liver", sim)
+print(liver_Container)
+```
+
+------------------------------------------------------------------------
+
+-   parameters
+
+getParameter
+
+```{r ,prompt=TRUE,comment=""}
+# Get the parameter volume of the liver interstitial space
+# path must use in vector, rather than "path"
+livParam <- getParameter("Interstitial|Volume", liver_Container)
+print(livParam)
+```
+
+------------------------------------------------------------------------
+
+### 获取全部的模型参数（all entities）
+
+使用wildcard表示不确定的container，并且以2个星号表示0或者数量多于1的情况
+
+```{r ,prompt=TRUE,comment="",collapse=FALSE}
+# Get the parameter `Volume` of the intracellular space of all organs,
+# with exactly one path element before `Intracellular`
+volumeParams <- getAllParametersMatching("Organism|*|Intracellular|Volume", sim)
+length(volumeParams)
+
+# Get the parameter `Volume` of the intracellular space of all organs,
+# no matter how many sub-containers the organ has.
+volumeParams <- getAllParametersMatching("Organism|**|Intracellular|Volume", sim)
+length(volumeParams)
+```
+
+### 模型entity的属性参数构成
+
+-   对于molecule类的参数性质
+
+```{r ,  collapse=FALSE,prompt=TRUE, comment=""}
+# Initial value of the molecule
+molecule_in_kidney$value
+
+
+# Dimension of the molecule. See section "Unit conversion" for more information.
+molecule_in_kidney$dimension
+
+
+# Is the initial value defined by a formula?
+molecule_in_kidney$isFormula
+
+# Type of the formula. CONSTANT if the value is defined by a constant.
+molecule_in_kidney$formula
+
+```
+
+------------------------------------------------------------------------
+
+-   对于container类德参数性质
+
+```{r ,  collapse=FALSE,prompt=TRUE, comment=""}
+# Path of the container
+liver_Container$path
+
+
+# Parent container
+liver_Container$parentContainer
+
+
+
+```
+
+------------------------------------------------------------------------
+
+-   对于模型parameter的性质的构成
+
+```{r ,  collapse=FALSE, prompt=TRUE, comment=""}
+# Initial value of the parameter
+livParam$value
+
+
+# Dimension of the parameter. See section "Unit conversion" for more information.
+livParam$dimension
+
+
+# Base unit of the parameter. See section "Unit conversion" for more information.
+livParam$unit
+
+
+# Is the initial value defined by a formula?
+livParam$isFormula
+
+
+# Type of the formula. CONSTANT if the value is defined by a constant.
+livParam$formula
+
+```
+
+------------------------------------------------------------------------
+
+### 使用Simulation Tree获取模拟中的每个元素
+
+```{r ,  collapse=FALSE, prompt=TRUE, comment=""}
+
+# Create simulation tree
+simTree <- getSimulationTree(sim)
+
+# Accessing the parameter "Organism|Weight"
+simTree$Organism$Weight
+
+# Getting all entities located under "Organism|Liver|Periportal|Intracellular"
+entitiesList <- simTree$Organism$Liver$Periportal$Intracellular
+entitiesList
+
+
+```
+
+## 3.修改模型parameter和分子初始数值的方法
+
+模型参数可以分为常数Constant和公式Formula
+
+
+
+
+
+
+
+
+
+
+
